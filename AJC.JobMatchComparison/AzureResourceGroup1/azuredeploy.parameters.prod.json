@@ -17,6 +17,9 @@
     "sqlEntraAdminLogin": {
       "value": "JobMatch SQL Administrators"
     },
+    "sqlAdministratorPassword": {
+      "value": "[concat('Z', 'A', 'D', uniqueString(resourceGroup().id, subscription().id), 'f', 't', 'x', '!')]"
+    },
     "sqlAllowedIpAddress": {
       "value": ""
     },
