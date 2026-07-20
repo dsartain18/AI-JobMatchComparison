@@ -499,10 +499,6 @@
               "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01').vaultUri]"
             },
             {
-              "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "dotnet-isolated"
-            },
-            {
               "name": "OpenAI__ApiKey",
               "value": "[format('@Microsoft.KeyVault(SecretUri=https://{0}.vault.azure.net/secrets/OpenAI-ApiKey/)', variables('keyVaultName'))]"
             },
