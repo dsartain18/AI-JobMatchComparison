@@ -90,7 +90,7 @@
     "applicationInsightsName": "[format('{0}-appi', variables('suffix'))]",
     "runtimeStorageName": "[take(format('{0}func', variables('compactSuffix')), 24)]",
     "applicationStorageName": "[take(format('{0}data', variables('compactSuffix')), 24)]",
-    "serviceBusNamespaceName": "[format('{0}-sb', variables('suffix'))]",
+    "serviceBusNamespaceName": "[format('{0}', variables('suffix'))]",
     "serviceBusQueueName": "job-analysis",
     "sqlServerName": "[take(format('{0}-sql', variables('compactSuffix')), 63)]",
     "sqlDatabaseName": "JobMatchComparison",
