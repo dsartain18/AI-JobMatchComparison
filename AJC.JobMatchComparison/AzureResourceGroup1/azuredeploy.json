@@ -389,238 +389,239 @@
         "attributes": {
           "enabled": true
         }
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('functionPlanName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "name": "FC1",
+        "tier": "FlexConsumption"
       },
-      {
-        "type": "Microsoft.Web/serverfarms",
-        "apiVersion": "2024-04-01",
-        "name": "[variables('functionPlanName')]",
-        "location": "[parameters('location')]",
-        "kind": "functionapp",
-        "tags": "[variables('tags')]",
-        "sku": {
-          "name": "FC1",
-          "tier": "FlexConsumption"
-        },
-        "properties": {
-          "reserved": true
-        }
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux",
+      "tags": "[variables('tags')]",
+      "identity": {
+        "type": "SystemAssigned"
       },
-      {
-        "type": "Microsoft.Web/sites",
-        "apiVersion": "2024-04-01",
-        "name": "[variables('functionAppName')]",
-        "location": "[parameters('location')]",
-        "kind": "functionapp,linux",
-        "tags": "[variables('tags')]",
-        "identity": {
-          "type": "SystemAssigned"
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/serverfarms', variables('functionPlanName'))]",
-          "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('runtimeStorageName'), 'default', variables('deploymentContainerName'))]",
-          "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
-          "[resourceId('Microsoft.ServiceBus/namespaces/queues', variables('serviceBusNamespaceName'), variables('serviceBusQueueName'))]",
-          "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('sqlDatabaseName'))]",
-          "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-        ],
-        "properties": {
-          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('functionPlanName'))]",
-          "httpsOnly": true,
-          "publicNetworkAccess": "Enabled",
-          "clientAffinityEnabled": false,
-          "functionAppConfig": {
-            "deployment": {
-              "storage": {
-                "type": "blobContainer",
-                "value": "[format('{0}{1}', reference(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), '2023-05-01').primaryEndpoints.blob, variables('deploymentContainerName'))]",
-                "authentication": {
-                  "type": "SystemAssignedIdentity"
-                }
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('functionPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('runtimeStorageName'), 'default', variables('deploymentContainerName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "[resourceId('Microsoft.ServiceBus/namespaces/queues', variables('serviceBusNamespaceName'), variables('serviceBusQueueName'))]",
+        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('sqlDatabaseName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('functionPlanName'))]",
+        "httpsOnly": true,
+        "publicNetworkAccess": "Enabled",
+        "clientAffinityEnabled": false,
+        "functionAppConfig": {
+          "deployment": {
+            "storage": {
+              "type": "blobContainer",
+              "value": "[format('{0}{1}', reference(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), '2023-05-01').primaryEndpoints.blob, variables('deploymentContainerName'))]",
+              "authentication": {
+                "type": "SystemAssignedIdentity"
               }
-            },
-            "runtime": {
-              "name": "dotnet-isolated",
-              "version": "8.0"
-            },
-            "scaleAndConcurrency": {
-              "maximumInstanceCount": "[parameters('functionMaximumInstanceCount')]",
-              "instanceMemoryMB": "[parameters('functionInstanceMemoryMB')]"
             }
           },
-          "siteConfig": {
-            "alwaysOn": false,
-            "ftpsState": "Disabled",
-            "minTlsVersion": "1.2",
-            "http20Enabled": true,
-            "appSettings": [
-              {
-                "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]"
-              },
-              {
-                "name": "AzureWebJobsStorage__accountName",
-                "value": "[variables('runtimeStorageName')]"
-              },
-              {
-                "name": "AzureWebJobsStorage__credential",
-                "value": "managedidentity"
-              },
-              {
-                "name": "JobMatchStorage__serviceUri",
-                "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), '2023-05-01').primaryEndpoints.blob]"
-              },
-              {
-                "name": "JobMatchStorage__accountName",
-                "value": "[variables('applicationStorageName')]"
-              },
-              {
-                "name": "ServiceBus__fullyQualifiedNamespace",
-                "value": "[format('{0}.servicebus.windows.net', variables('serviceBusNamespaceName'))]"
-              },
-              {
-                "name": "ServiceBus__queueName",
-                "value": "[variables('serviceBusQueueName')]"
-              },
-              {
-                "name": "Sql__connectionString",
-                "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Managed Identity;', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2023-08-01-preview').fullyQualifiedDomainName, variables('sqlDatabaseName'))]"
-              },
-              {
-                "name": "KeyVault__vaultUri",
-                "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01').vaultUri]"
-              },
-              {
-                "name": "FUNCTIONS_WORKER_RUNTIME",
-                "value": "dotnet-isolated"
-              },
-              {
-                "name": "OpenAI__ApiKey",
-                "value": "[parameters('openAiApiKey')]"
-              },
-              {
-                "name": "OpenAI__Model",
-                "value": "[parameters('openAiModel')]"
-              }
-            ]
+          "runtime": {
+            "name": "dotnet-isolated",
+            "version": "8.0"
+          },
+          "scaleAndConcurrency": {
+            "maximumInstanceCount": "[parameters('functionMaximumInstanceCount')]",
+            "instanceMemoryMB": "[parameters('functionInstanceMemoryMB')]"
           }
-        }
-      },
-      {
-        "type": "Microsoft.Insights/diagnosticSettings",
-        "apiVersion": "2021-05-01-preview",
-        "scope": "[format('Microsoft.Web/sites/{0}', variables('functionAppName'))]",
-        "name": "send-to-log-analytics",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-          "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
-        ],
-        "properties": {
-          "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
-          "logs": [
+        },
+        "siteConfig": {
+          "alwaysOn": false,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "http20Enabled": true,
+          "appSettings": [
             {
-              "categoryGroup": "allLogs",
-              "enabled": true
-            }
-          ],
-          "metrics": [
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]"
+            },
             {
-              "category": "AllMetrics",
-              "enabled": true
+              "name": "AzureWebJobsStorage__accountName",
+              "value": "[variables('runtimeStorageName')]"
+            },
+            {
+              "name": "AzureWebJobsStorage__credential",
+              "value": "managedidentity"
+            },
+            {
+              "name": "JobMatchStorage__serviceUri",
+              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), '2023-05-01').primaryEndpoints.blob]"
+            },
+            {
+              "name": "JobMatchStorage__accountName",
+              "value": "[variables('applicationStorageName')]"
+            },
+            {
+              "name": "ServiceBus__fullyQualifiedNamespace",
+              "value": "[format('{0}.servicebus.windows.net', variables('serviceBusNamespaceName'))]"
+            },
+            {
+              "name": "ServiceBus__queueName",
+              "value": "[variables('serviceBusQueueName')]"
+            },
+            {
+              "name": "Sql__connectionString",
+              "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Managed Identity;', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2023-08-01-preview').fullyQualifiedDomainName, variables('sqlDatabaseName'))]"
+            },
+            {
+              "name": "KeyVault__vaultUri",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01').vaultUri]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet-isolated"
+            },
+            {
+              "name": "OpenAI__ApiKey",
+              "value": "[parameters('openAiApiKey')]"
+            },
+            {
+              "name": "OpenAI__Model",
+              "value": "[parameters('openAiModel')]"
             }
           ]
         }
-      },
-      {
-        "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageBlobDataContributorRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]"
-        }
-      },
-      {
-        "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageQueueDataContributorRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('storageQueueDataContributorRoleId')]"
-        }
-      },
-      {
-        "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageTableDataContributorRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('storageTableDataContributorRoleId')]"
-        }
-      },
-      {
-        "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('applicationStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageBlobDataContributorRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]"
-        }
-      },
-      {
-        "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('serviceBusDataReceiverRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('serviceBusDataReceiverRoleId')]"
-        }
-      },
-      {
-        "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('serviceBusDataSenderRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('serviceBusDataSenderRoleId')]"
-        }
-      },
-      {
-        "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('keyVaultSecretsUserRoleId')))]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ],
-        "properties": {
-          "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]"
-        }
       }
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.Web/sites/{0}', variables('functionAppName'))]",
+      "name": "send-to-log-analytics",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ],
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
+        "logs": [
+          {
+            "categoryGroup": "allLogs",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageBlobDataContributorRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageQueueDataContributorRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('storageQueueDataContributorRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageTableDataContributorRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('storageTableDataContributorRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('applicationStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageBlobDataContributorRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('serviceBusDataReceiverRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('serviceBusDataReceiverRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('serviceBusDataSenderRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('serviceBusDataSenderRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('keyVaultSecretsUserRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]"
+      }
+    }
   ],
   "outputs": {
     "functionAppName": {
