@@ -64,6 +64,13 @@
         4096
       ]
     },
+    "roleAssignmentGeneration": {
+      "type": "string",
+      "defaultValue": "windows-v1",
+      "metadata": {
+        "description": "Stable seed used in role-assignment names. Change this value only when the Function App system-assigned identity is recreated."
+      }
+    },
     "openAiApiKey": {
       "type": "secureString",
       "metadata": {
@@ -526,7 +533,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageBlobDataContributorRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('storageBlobDataContributorRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName'))]"
@@ -540,7 +547,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageQueueDataContributorRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('storageQueueDataContributorRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName'))]"
@@ -554,7 +561,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageTableDataContributorRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('runtimeStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('storageTableDataContributorRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('runtimeStorageName'))]"
@@ -568,7 +575,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('applicationStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('storageBlobDataContributorRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('applicationStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('storageBlobDataContributorRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName'))]"
@@ -582,7 +589,7 @@
     {
       "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('serviceBusDataReceiverRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('serviceBusDataReceiverRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"
@@ -596,7 +603,7 @@
     {
       "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('serviceBusDataSenderRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('serviceBusDataSenderRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"
@@ -610,7 +617,7 @@
     {
       "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId, variables('keyVaultSecretsUserRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
