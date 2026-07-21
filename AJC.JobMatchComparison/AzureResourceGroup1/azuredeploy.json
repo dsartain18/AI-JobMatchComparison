@@ -87,7 +87,7 @@
   },
   "variables": {
     "suffix": "[toLower(format('{0}-{1}', parameters('namePrefix'), parameters('environmentName')))]",
-    "compactSuffix": "[take(toLower(replace(format('{0}{1}{2}', parameters('namePrefix'), parameters('environmentName'), uniqueString(resourceGroup().id)), '-', '')), 20)]",
+    "compactSuffix": "[take(toLower(replace(format('{0}{1}', parameters('namePrefix'), parameters('environmentName')), '-', '')), 20)]",
     "tags": {
       "application": "JobMatchComparison",
       "environment": "[parameters('environmentName')]",
@@ -99,7 +99,7 @@
     "applicationStorageName": "[take(format('{0}data', variables('compactSuffix')), 24)]",
     "serviceBusNamespaceName": "[format('{0}', variables('suffix'))]",
     "serviceBusQueueName": "job-analysis",
-    "sqlServerName": "[take(format('{0}-sql', variables('compactSuffix')), 63)]",
+    "sqlServerName": "[take(format('{0}-{1}-sql', 'ajc', variables('compactSuffix')), 63)]",
     "sqlDatabaseName": "JobMatchComparison",
     "keyVaultName": "[concat('ajc-keyvault3', '-', parameters('environmentName'))]",
     "functionPlanName": "[format('{0}-flex-plan', variables('suffix'))]",

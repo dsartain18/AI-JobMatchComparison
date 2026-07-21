@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureResourceGroup", "Azure
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "AJC.Database", "AJC.Database\AJC.Database.sqlproj", "{C6B2085F-AC15-478A-AA65-D32D320A335E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AJC.Data", "AJC.Data\AJC.Data.csproj", "{C1F8A747-0BC7-4A6A-9146-346AA10977E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,14 @@ Global
 		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|x64.ActiveCfg = Release|Any CPU
 		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|x64.Build.0 = Release|Any CPU
 		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|x64.Deploy.0 = Release|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Debug|x64.Build.0 = Debug|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Release|x64.ActiveCfg = Release|Any CPU
+		{C1F8A747-0BC7-4A6A-9146-346AA10977E7}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
