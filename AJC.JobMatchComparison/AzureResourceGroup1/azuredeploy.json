@@ -101,7 +101,7 @@
     "serviceBusQueueName": "job-analysis",
     "sqlServerName": "[take(format('{0}-sql', variables('compactSuffix')), 63)]",
     "sqlDatabaseName": "JobMatchComparison",
-    "keyVaultName": "[concat('ajc-keyvault', '-', parameters('environmentName'))]",
+    "keyVaultName": "[concat('ajc-keyvault2', '-', parameters('environmentName'))]",
     "functionPlanName": "[format('{0}-flex-plan', variables('suffix'))]",
     "functionAppName": "[concat('ajc-functionapp', '-', parameters('environmentName'))]",
     "deploymentContainerName": "function-releases",
