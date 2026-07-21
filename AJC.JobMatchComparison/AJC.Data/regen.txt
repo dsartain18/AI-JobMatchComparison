@@ -1,1 +1,1 @@
-﻿
+﻿dotnet ef dbcontext scaffold "Server=YOURSERVER;Database=YOURDB;Trusted_Connection=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer --output-dir Models --context ApplicationDbContext --table Table1 --table Table2 --table Table3 --no-onconfiguring --force
