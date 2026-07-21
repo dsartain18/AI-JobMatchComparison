@@ -441,68 +441,79 @@
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('functionPlanName'))]",
         "httpsOnly": true,
         "publicNetworkAccess": "Enabled",
-        "clientAffinityEnabled": false,
-        "siteConfig": {
-          "alwaysOn": false,
-          "ftpsState": "Disabled",
-          "minTlsVersion": "1.2",
-          "http20Enabled": true,
-          "netFrameworkVersion": "v8.0",
-          "appSettings": [
-            {
-              "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~4"
-            },
-            {
-              "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "dotnet-isolated"
-            },
-            {
-              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]"
-            },
-            {
-              "name": "AzureWebJobsStorage__accountName",
-              "value": "[variables('runtimeStorageName')]"
-            },
-            {
-              "name": "AzureWebJobsStorage__credential",
-              "value": "managedidentity"
-            },
-            {
-              "name": "JobMatchStorage__serviceUri",
-              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), '2023-05-01').primaryEndpoints.blob]"
-            },
-            {
-              "name": "JobMatchStorage__accountName",
-              "value": "[variables('applicationStorageName')]"
-            },
-            {
-              "name": "ServiceBus__fullyQualifiedNamespace",
-              "value": "[format('{0}.servicebus.windows.net', variables('serviceBusNamespaceName'))]"
-            },
-            {
-              "name": "ServiceBus__queueName",
-              "value": "[variables('serviceBusQueueName')]"
-            },
-            {
-              "name": "Sql__connectionString",
-              "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Managed Identity;', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2023-08-01-preview').fullyQualifiedDomainName, variables('sqlDatabaseName'))]"
-            },
-            {
-              "name": "KeyVault__vaultUri",
-              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01').vaultUri]"
-            },
-            {
-              "name": "OpenAI__ApiKey",
-              "value": "[format('@Microsoft.KeyVault(SecretUri=https://{0}.vault.azure.net/secrets/OpenAI-ApiKey/)', variables('keyVaultName'))]"
-            },
-            {
-              "name": "OpenAI__Model",
-              "value": "[parameters('openAiModel')]"
-            }
-          ]
-        }
+        "clientAffinityEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/web', variables('functionAppName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "alwaysOn": false,
+        "ftpsState": "Disabled",
+        "minTlsVersion": "1.2",
+        "http20Enabled": true,
+        "netFrameworkVersion": "v8.0",
+        "appSettings": [
+          {
+            "name": "FUNCTIONS_EXTENSION_VERSION",
+            "value": "~4"
+          },
+          {
+            "name": "FUNCTIONS_WORKER_RUNTIME",
+            "value": "dotnet-isolated"
+          },
+          {
+            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+            "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]"
+          },
+          {
+            "name": "AzureWebJobsStorage__accountName",
+            "value": "[variables('runtimeStorageName')]"
+          },
+          {
+            "name": "AzureWebJobsStorage__credential",
+            "value": "managedidentity"
+          },
+          {
+            "name": "JobMatchStorage__serviceUri",
+            "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), '2023-05-01').primaryEndpoints.blob]"
+          },
+          {
+            "name": "JobMatchStorage__accountName",
+            "value": "[variables('applicationStorageName')]"
+          },
+          {
+            "name": "ServiceBus__fullyQualifiedNamespace",
+            "value": "[format('{0}.servicebus.windows.net', variables('serviceBusNamespaceName'))]"
+          },
+          {
+            "name": "ServiceBus__queueName",
+            "value": "[variables('serviceBusQueueName')]"
+          },
+          {
+            "name": "Sql__connectionString",
+            "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Managed Identity;', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2023-08-01-preview').fullyQualifiedDomainName, variables('sqlDatabaseName'))]"
+          },
+          {
+            "name": "KeyVault__vaultUri",
+            "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), '2023-07-01').vaultUri]"
+          },
+          {
+            "name": "OpenAI__ApiKey",
+            "value": "[format('@Microsoft.KeyVault(SecretUri=https://{0}.vault.azure.net/secrets/OpenAI-ApiKey/)', variables('keyVaultName'))]"
+          },
+          {
+            "name": "OpenAI__Model",
+            "value": "[parameters('openAiModel')]"
+          }
+        ],
+        "use32BitWorkerProcess": false
       }
     },
     {
