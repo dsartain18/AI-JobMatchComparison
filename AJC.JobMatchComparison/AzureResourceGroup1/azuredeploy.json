@@ -102,6 +102,8 @@
     "sqlServerName": "[take(format('{0}-{1}-sql', 'ajc', variables('compactSuffix')), 63)]",
     "sqlDatabaseName": "JobMatchComparison",
     "keyVaultName": "[concat('ajc-keyvault3', '-', parameters('environmentName'))]",
+    "operationsKeyVaultName": "[concat('ajc-ops-keyvault3', '-', parameters('environmentName'))]",
+    "sqlAdministratorPasswordSecretName": "Sql-Administrator-Password",
     "functionPlanName": "[format('{0}-flex-plan', variables('suffix'))]",
     "functionAppName": "[concat('ajc-functionapp', '-', parameters('environmentName'))]",
     "deploymentContainerName": "function-releases",
@@ -304,7 +306,9 @@
         "publicNetworkAccess": "Enabled",
         "restrictOutboundNetworkAccess": "Disabled"
       },
-      "dependsOn": []
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('operationsKeyVaultName'), variables('sqlAdministratorPasswordSecretName'))]"
+      ]
     },
     {
       "type": "Microsoft.Sql/servers/databases",
@@ -399,6 +403,43 @@
       "properties": {
         "value": "[parameters('openAiApiKey')]",
         "contentType": "OpenAI API key",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('operationsKeyVaultName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "enableRbacAuthorization": true,
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "enablePurgeProtection": true,
+        "softDeleteRetentionInDays": 90,
+        "publicNetworkAccess": "Enabled"
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', variables('operationsKeyVaultName'), variables('sqlAdministratorPasswordSecretName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('sqlAdministratorPassword')]",
+        "contentType": "Azure SQL administrator password",
         "attributes": {
           "enabled": true
         }
@@ -668,6 +709,10 @@
     "keyVaultName": {
       "type": "string",
       "value": "[variables('keyVaultName')]"
+    },
+    "operationsKeyVaultName": {
+      "type": "string",
+      "value": "[variables('operationsKeyVaultName')]"
     },
     "applicationStorageAccountName": {
       "type": "string",
