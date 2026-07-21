@@ -9,6 +9,8 @@ Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "AzureResourceGroup1", "Azur
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureResourceGroup", "AzureResourceGroup", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "AJC.Database", "AJC.Database\AJC.Database.sqlproj", "{C6B2085F-AC15-478A-AA65-D32D320A335E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,18 @@ Global
 		{F37CA38D-E15D-43B6-864D-CCF568E0353E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F37CA38D-E15D-43B6-864D-CCF568E0353E}.Release|x64.ActiveCfg = Release|x64
 		{F37CA38D-E15D-43B6-864D-CCF568E0353E}.Release|x64.Build.0 = Release|x64
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Debug|x64.Build.0 = Debug|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Debug|x64.Deploy.0 = Debug|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|x64.ActiveCfg = Release|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|x64.Build.0 = Release|Any CPU
+		{C6B2085F-AC15-478A-AA65-D32D320A335E}.Release|x64.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
