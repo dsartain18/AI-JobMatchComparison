@@ -1,48 +1,81 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace AJC.Functions
 {
-    public static class CreateJobMatches
+    public class CreateJobMatches
     {
-        [FunctionName("CreateJobMatches")]
-        public static async Task<IActionResult> RunHttpTrigger(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ILogger log)
+        private readonly ILogger<CreateJobMatches> _logger;
+
+        public CreateJobMatches(ILogger<CreateJobMatches> logger)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
+            _logger = logger;
         }
 
-        [FunctionName("CreateJobMatchesTimer")]
-        public static async Task RunTimerTrigger(
-            [TimerTrigger("0 0 6 * * *")] TimerInfo timer, ILogger log)
+        [Function("CreateJobMatches")]
+        public async Task<HttpResponseData> Run(
+        [HttpTrigger(
+            AuthorizationLevel.Function,
+            "get",
+            Route = null)]
+        HttpRequestData req)
         {
-            log.LogInformation(
+            _logger.LogInformation(
+                "C# HTTP trigger function processed a request.");
+
+            var query =
+                QueryHelpers.ParseQuery(req.Url.Query);
+
+            string? name = query.TryGetValue("name", out var queryName)
+                ? queryName.FirstOrDefault()
+                : null;
+
+            if (string.IsNullOrEmpty(name))
+            {
+                string requestBody =
+                    await new StreamReader(req.Body).ReadToEndAsync();
+
+                if (!string.IsNullOrWhiteSpace(requestBody))
+                {
+                    dynamic? data =
+                        JsonConvert.DeserializeObject(requestBody);
+
+                    name = data?.name;
+                }
+            }
+
+            string message = string.IsNullOrEmpty(name)
+                ? "This HTTP triggered function executed successfully. Pass a name in the query string or request body for a personalized response."
+                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+
+            var response =
+                req.CreateResponse(HttpStatusCode.OK);
+
+            await response.WriteStringAsync(message);
+
+            return response;
+        }
+
+        [Function("CreateJobMatchesTimer")]
+        public async Task RunAsync(
+        [TimerTrigger("0 0 6 * * *")] TimerInfo timer)
+        {
+            _logger.LogInformation(
                 "CreateJobMatches timer trigger executed at: {ExecutionTime}",
                 DateTime.UtcNow);
 
             if (timer.IsPastDue)
             {
-                log.LogWarning("CreateJobMatches timer trigger is running late.");
+                _logger.LogWarning(
+                    "CreateJobMatches timer trigger is running late.");
             }
 
             // Add the job-search workflow here.
