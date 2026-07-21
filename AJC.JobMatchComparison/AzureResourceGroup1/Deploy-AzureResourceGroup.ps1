@@ -10,7 +10,6 @@ Param(
     [string] $TemplateParametersFile = 'azuredeploy.parameters.json',
     [string] $ArtifactStagingDirectory = '.',
     [string] $DSCSourceFolder = 'DSC',
-    [SecureString] $SqlAdministratorPassword,
     [switch] $ValidateOnly
 )
 
@@ -45,41 +44,6 @@ function Format-ValidationOutput {
 $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
-$JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-if ($null -ne ($JsonParameters | Get-Member -Type NoteProperty 'parameters')) {
-    $JsonParameters = $JsonParameters.parameters
-}
-
-$EnvironmentName = $JsonParameters.environmentName.value
-if ([string]::IsNullOrWhiteSpace($EnvironmentName)) {
-    throw "The template parameter file must define environmentName."
-}
-
-$OperationsKeyVaultName = "ajc-ops-keyvault3-$EnvironmentName"
-$SqlAdministratorPasswordSecretName = 'Sql-Administrator-Password'
-
-if ($null -eq $SqlAdministratorPassword) {
-    $OperationsKeyVault = Get-AzKeyVault -VaultName $OperationsKeyVaultName -ErrorAction SilentlyContinue
-    if ($null -ne $OperationsKeyVault) {
-        $ExistingSqlPassword = Get-AzKeyVaultSecret `
-            -VaultName $OperationsKeyVaultName `
-            -Name $SqlAdministratorPasswordSecretName `
-            -ErrorAction SilentlyContinue
-
-        if ($null -ne $ExistingSqlPassword) {
-            $SqlAdministratorPassword = $ExistingSqlPassword.SecretValue
-            Write-Host "Using the existing SQL administrator password from $OperationsKeyVaultName."
-        }
-    }
-}
-
-if ($null -eq $SqlAdministratorPassword) {
-    $SqlAdministratorPassword = Read-Host `
-        -Prompt "Enter the SQL administrator password to store in $OperationsKeyVaultName" `
-        -AsSecureString
-}
-
-$OptionalParameters['sqlAdministratorPassword'] = $SqlAdministratorPassword
 
 if ($UploadArtifacts) {
     Write-Host "Uploading artifacts..."
@@ -89,6 +53,10 @@ if ($UploadArtifacts) {
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
 
     # Parse the parameter file and update the values of artifacts location and artifacts location SAS token if they are present
+    $JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
+    if ($null -ne ($JsonParameters | Get-Member -Type NoteProperty 'parameters')) {
+        $JsonParameters = $JsonParameters.parameters
+    }
     $ArtifactsLocationName = '_artifactsLocation'
     $ArtifactsLocationSasTokenName = '_artifactsLocationSasToken'
     $OptionalParameters[$ArtifactsLocationName] = $JsonParameters | Select-Object -Expand $ArtifactsLocationName -ErrorAction Ignore | Select-Object -Expand 'value' -ErrorAction Ignore
