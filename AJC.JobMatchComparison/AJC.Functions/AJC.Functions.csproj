@@ -12,17 +12,12 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="Azure.Identity" Version="1.17.1" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.*" />
-
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.*" OutputItemType="Analyzer" />
-
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.*" />
-
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.*" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.*" />
-
-    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.*" />
-
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,7 +33,6 @@
 
   <ItemGroup>
     <Folder Include="Entities\" />
-    <Folder Include="Services\Interfaces\" />
   </ItemGroup>
 
 </Project>

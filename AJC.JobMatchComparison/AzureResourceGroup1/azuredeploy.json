@@ -64,6 +64,20 @@
         4096
       ]
     },
+    "jobSearchSchedule": {
+      "type": "string",
+      "defaultValue": "0 0 6 * * *",
+      "metadata": {
+        "description": "Six-field NCRONTAB schedule for the job retrieval workflow."
+      }
+    },
+    "jobSearchScheduleDisabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Disables automatic job retrieval while retaining manual execution through the Functions administrator endpoint."
+      }
+    },
     "roleAssignmentGeneration": {
       "type": "string",
       "defaultValue": "windows-v1",
@@ -113,6 +127,7 @@
     "functionPlanName": "[format('{0}-flex-plan', variables('suffix'))]",
     "functionAppName": "[concat('ajc-functionapp', '-', parameters('environmentName'))]",
     "deploymentContainerName": "function-releases",
+    "jobSearchLockContainerName": "job-search-scheduler-locks",
     "storageBlobDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
     "storageQueueDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
     "storageTableDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')]",
@@ -192,6 +207,17 @@
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2023-05-01",
       "name": "[format('{0}/default/{1}', variables('runtimeStorageName'), variables('deploymentContainerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('runtimeStorageName'), 'default')]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/default/{1}', variables('runtimeStorageName'), variables('jobSearchLockContainerName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('runtimeStorageName'), 'default')]"
       ],
@@ -515,6 +541,14 @@
           {
             "name": "FUNCTIONS_WORKER_RUNTIME",
             "value": "dotnet-isolated"
+          },
+          {
+            "name": "JobSearchSchedule",
+            "value": "[parameters('jobSearchSchedule')]"
+          },
+          {
+            "name": "AzureWebJobs.CreateJobMatchesTimer.Disabled",
+            "value": "[string(parameters('jobSearchScheduleDisabled'))]"
           },
           {
             "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
