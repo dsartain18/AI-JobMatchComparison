@@ -32,6 +32,9 @@
     "jobSearchScheduleDisabled": {
       "value": false
     },
+    "appRegistrationObjectId": {
+      "value": "b9f1f9e2-a2e2-41c3-ac7a-b98c16c7b7f8"
+    },
     "keyVaultAdministratorObjectId": {
       "value": "0b81b530-6403-40e0-9ad0-539f795c4040"
     },
