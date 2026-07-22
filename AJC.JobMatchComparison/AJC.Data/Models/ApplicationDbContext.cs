@@ -17,13 +17,13 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<JobRetrievalWorkflowExecution> JobRetrievalWorkflowExecutions { get; set; }
 
+    public virtual DbSet<JobSearchCriterion> JobSearchCriteria { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<JobBoardProvider>(entity =>
         {
             entity.ToTable("JobBoardProvider");
-
-            entity.HasIndex(e => e.IsEnabled, "IX_JobBoardProvider_IsEnabled").HasFilter("([IsEnabled]=(1))");
 
             entity.HasIndex(e => e.JobBoardName, "UQ_JobBoardProvider_JobBoardName").IsUnique();
 
@@ -36,6 +36,9 @@ public partial class ApplicationDbContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.FeedUrl).HasMaxLength(2048);
             entity.Property(e => e.IsEnabled).HasDefaultValue(true);
+            entity.Property(e => e.JobBoardApplicationId)
+                .HasMaxLength(25)
+                .IsUnicode(false);
             entity.Property(e => e.JobBoardName).HasMaxLength(200);
             entity.Property(e => e.ModifiedDate).HasPrecision(3);
         });
@@ -86,6 +89,15 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.StartedDate)
                 .HasPrecision(3)
                 .HasDefaultValueSql("(CONVERT([datetime2](3),((sysutcdatetime() AT TIME ZONE 'UTC') AT TIME ZONE 'Central Standard Time')))");
+        });
+
+        modelBuilder.Entity<JobSearchCriterion>(entity =>
+        {
+            entity.HasKey(e => e.JobSearchCriteriaId).HasName("PK__JobSearc__0B239C214087D6D7");
+
+            entity.Property(e => e.JobSearchCriteriaDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

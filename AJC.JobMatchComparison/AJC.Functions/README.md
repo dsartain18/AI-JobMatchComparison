@@ -34,6 +34,23 @@ header. The local Functions host does not enforce authorization by default.
 - TODO(SCRUM-5/manual): Add the required rows to `JobBoardProvider`, using a
   secret-store reference in `CredentialReference` rather than a plaintext API
   key. Disabled rows are ignored by the workflow.
-- TODO(SCRUM-5/manual): When provider authentication is implemented in its
-  separate story, configure the Function App's managed identity and grant it
-  read access to the approved secret store.
+
+### Adzuna provider
+
+For Adzuna, configure the provider row as follows:
+
+- `JobBoardName`: `Adzuna`
+- `JobBoardApplicationId`: the Adzuna `app_id`
+- `FeedUrl`: `https://api.adzuna.com/v1/api/jobs/us/search`
+- `CredentialReference`: the name of the secret in the application Key Vault
+  (`ajc-keyvault3-{environment}`) containing only the Adzuna `app_key`
+- `ExpectedResponseType`: `json`
+- `IsEnabled`: `true`
+
+The workflow loads nonblank `JobSearchCriteria` records and issues one request
+per enabled provider and criterion. The URL manager appends the configured
+search page and adds `app_id`, `app_key`, `results_per_page`, and `what`; the
+`what` value comes from `JobSearchCriteriaDescription`. Azure deployments
+configure the other non-secret values through `adzunaSearchPage` and
+`adzunaResultsPerPage`. Never log or persist the constructed URL because it
+contains the Adzuna API key.

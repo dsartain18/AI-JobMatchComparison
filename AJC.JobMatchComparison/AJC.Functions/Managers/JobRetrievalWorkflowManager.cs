@@ -82,48 +82,55 @@ public sealed class JobRetrievalWorkflowManager : IJobRetrievalWorkflowManager
             executionWasCreated = true;
 
             var providers = await _repository.GetEnabledProvidersAsync(cancellationToken);
+            var searchCriteria = await _repository.GetSearchCriteriaAsync(cancellationToken);
 
             _logger.LogInformation(
-                "Loaded {ProviderCount} enabled job-board providers for workflow {WorkflowExecutionId}.",
+                "Loaded {ProviderCount} enabled job-board providers and {SearchCriteriaCount} search criteria for workflow {WorkflowExecutionId}.",
                 providers.Count,
+                searchCriteria.Count,
                 executionId);
 
             foreach (var provider in providers)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                attempted++;
-
-                try
+                foreach (var searchCriterion in searchCriteria)
                 {
-                    var response = await _providerClient.RetrieveAsync(
-                        executionId,
-                        provider,
-                        cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    attempted++;
 
-                    await _repository.AddProviderResponseAsync(response, cancellationToken);
-
-                    if (response.WasSuccessful)
+                    try
                     {
-                        succeeded++;
+                        var response = await _providerClient.RetrieveAsync(
+                            executionId,
+                            provider,
+                            searchCriterion,
+                            cancellationToken);
+
+                        await _repository.AddProviderResponseAsync(response, cancellationToken);
+
+                        if (response.WasSuccessful)
+                        {
+                            succeeded++;
+                        }
+                        else
+                        {
+                            failed++;
+                        }
                     }
-                    else
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
                     {
                         failed++;
+                        _logger.LogError(
+                            exception,
+                            "Provider {JobBoardName} ({JobBoardProviderId}) failed independently for search criterion {JobSearchCriteriaId} in workflow {WorkflowExecutionId}; remaining requests will still be called.",
+                            provider.JobBoardName,
+                            provider.JobBoardProviderId,
+                            searchCriterion.JobSearchCriteriaId,
+                            executionId);
                     }
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception exception)
-                {
-                    failed++;
-                    _logger.LogError(
-                        exception,
-                        "Provider {JobBoardName} ({JobBoardProviderId}) failed independently in workflow {WorkflowExecutionId}; remaining providers will still be called.",
-                        provider.JobBoardName,
-                        provider.JobBoardProviderId,
-                        executionId);
                 }
             }
 

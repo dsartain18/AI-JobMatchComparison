@@ -78,6 +78,23 @@
         "description": "Disables automatic job retrieval while retaining manual execution through the Functions administrator endpoint."
       }
     },
+    "adzunaSearchPage": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Adzuna search result page requested by the retrieval workflow."
+      }
+    },
+    "adzunaResultsPerPage": {
+      "type": "int",
+      "defaultValue": 25,
+      "minValue": 1,
+      "maxValue": 50,
+      "metadata": {
+        "description": "Number of Adzuna jobs requested per page."
+      }
+    },
     "roleAssignmentGeneration": {
       "type": "string",
       "defaultValue": "windows-v1",
@@ -564,6 +581,14 @@
           {
             "name": "JobSearchSchedule",
             "value": "[parameters('jobSearchSchedule')]"
+          },
+          {
+            "name": "Adzuna__SearchPage",
+            "value": "[string(parameters('adzunaSearchPage'))]"
+          },
+          {
+            "name": "Adzuna__ResultsPerPage",
+            "value": "[string(parameters('adzunaResultsPerPage'))]"
           },
           {
             "name": "AzureWebJobs.CreateJobMatchesTimer.Disabled",

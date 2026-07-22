@@ -31,6 +31,18 @@ public sealed class JobRetrievalWorkflowRepository : IJobRetrievalWorkflowReposi
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<JobSearchCriterion>> GetSearchCriteriaAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.JobSearchCriteria
+            .AsNoTracking()
+            .Where(criteria =>
+                criteria.JobSearchCriteriaDescription != null &&
+                criteria.JobSearchCriteriaDescription.Trim() != string.Empty)
+            .OrderBy(criteria => criteria.JobSearchCriteriaId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddProviderResponseAsync(
         JobBoardProviderResponse response,
         CancellationToken cancellationToken = default)

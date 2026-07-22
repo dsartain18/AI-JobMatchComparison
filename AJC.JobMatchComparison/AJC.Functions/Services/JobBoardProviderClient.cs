@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using AJC.Data.Models;
+using AJC.Functions.Managers.Interfaces;
 using AJC.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -12,22 +13,27 @@ public sealed class JobBoardProviderClient : IJobBoardProviderClient
         TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
 
     private readonly HttpClient _httpClient;
+    private readonly IJobBoardUrlManager _urlManager;
     private readonly ILogger<JobBoardProviderClient> _logger;
 
     public JobBoardProviderClient(
         HttpClient httpClient,
+        IJobBoardUrlManager urlManager,
         ILogger<JobBoardProviderClient> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _urlManager = urlManager ?? throw new ArgumentNullException(nameof(urlManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<JobBoardProviderResponse> RetrieveAsync(
         Guid workflowExecutionId,
         JobBoardProvider provider,
+        JobSearchCriterion searchCriterion,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(searchCriterion);
 
         var startedDate = GetCentralTime();
         var startedTimestamp = Stopwatch.GetTimestamp();
@@ -37,13 +43,18 @@ public sealed class JobBoardProviderClient : IJobBoardProviderClient
             {
                 ["WorkflowExecutionId"] = workflowExecutionId,
                 ["JobBoardProviderId"] = provider.JobBoardProviderId,
-                ["JobBoardName"] = provider.JobBoardName
+                ["JobBoardName"] = provider.JobBoardName,
+                ["JobBoardApplicationId"] = provider.JobBoardApplicationId ?? "",
+                ["JobSearchCriteriaId"] = searchCriterion.JobSearchCriteriaId,
+                ["JobSearchCriteriaDescription"] =
+                    searchCriterion.JobSearchCriteriaDescription ?? ""
             });
 
         _logger.LogInformation(
-            "Provider request started for {JobBoardName} ({JobBoardProviderId}) in workflow {WorkflowExecutionId} at {RequestStartedDate} Central Time.",
+            "Provider request started for {JobBoardName} ({JobBoardProviderId}) ({JobBoardApplicationId}) in workflow {WorkflowExecutionId} at {RequestStartedDate} Central Time.",
             provider.JobBoardName,
             provider.JobBoardProviderId,
+            provider.JobBoardApplicationId,
             workflowExecutionId,
             startedDate);
 
@@ -58,11 +69,11 @@ public sealed class JobBoardProviderClient : IJobBoardProviderClient
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, provider.FeedUrl);
-
-            // TODO(SCRUM-5/manual): Resolve provider.CredentialReference from the approved
-            // secret store and apply it to this request when authentication is implemented.
-            // Never replace the reference in JobBoardProvider with a plaintext API key.
+            var requestUrl = await _urlManager.BuildUrlAsync(
+                provider,
+                searchCriterion,
+                cancellationToken);
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
             using var response = await _httpClient.SendAsync(
                 request,

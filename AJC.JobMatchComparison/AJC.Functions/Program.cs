@@ -28,6 +28,8 @@ var host = new HostBuilder()
         services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
             options.UseSqlServer(serviceProvider.GetRequiredService<Lazy<string>>().Value));
         services.AddHttpClient<IJobBoardProviderClient, JobBoardProviderClient>();
+        services.AddSingleton<IKeyVaultSecretManager, KeyVaultSecretManager>();
+        services.AddSingleton<IJobBoardUrlManager, JobBoardUrlManager>();
         services.AddScoped<IJobExecutionLockService, BlobJobExecutionLockService>();
         services.AddScoped<IJobRetrievalWorkflowManager, JobRetrievalWorkflowManager>();
         services.AddScoped<IJobRetrievalWorkflowRepository, JobRetrievalWorkflowRepository>();

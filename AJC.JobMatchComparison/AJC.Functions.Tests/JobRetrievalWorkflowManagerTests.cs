@@ -56,6 +56,25 @@ public sealed class JobRetrievalWorkflowManagerTests
     }
 
     [Fact]
+    public async Task ExecuteAsyncCallsEveryProviderForEverySearchCriterion()
+    {
+        var providers = new[] { CreateProvider(1, "Board One") };
+        var criteria = new[]
+        {
+            CreateSearchCriterion(1, "Software Engineer"),
+            CreateSearchCriterion(2, "Cloud Architect")
+        };
+        var repository = new TestRepository(providers, criteria);
+        var client = new TestProviderClient();
+        var manager = CreateManager(repository: repository, providerClient: client);
+
+        await manager.ExecuteAsync();
+
+        Assert.Equal(criteria, client.RequestedSearchCriteria);
+        Assert.Equal(("Completed", 2, 2, 0), repository.Completion);
+    }
+
+    [Fact]
     public async Task ExecuteAsyncGeneratesUniqueExecutionIdentifiers()
     {
         var lockService = new TestJobExecutionLockService();
@@ -156,13 +175,27 @@ public sealed class JobRetrievalWorkflowManagerTests
         };
     }
 
+    private static JobSearchCriterion CreateSearchCriterion(int id, string description)
+    {
+        return new JobSearchCriterion
+        {
+            JobSearchCriteriaId = id,
+            JobSearchCriteriaDescription = description
+        };
+    }
+
     private sealed class TestRepository : IJobRetrievalWorkflowRepository
     {
         private readonly IReadOnlyList<JobBoardProvider> _providers;
+        private readonly IReadOnlyList<JobSearchCriterion> _searchCriteria;
 
-        public TestRepository(IReadOnlyList<JobBoardProvider>? providers = null)
+        public TestRepository(
+            IReadOnlyList<JobBoardProvider>? providers = null,
+            IReadOnlyList<JobSearchCriterion>? searchCriteria = null)
         {
             _providers = providers ?? [];
+            _searchCriteria = searchCriteria ??
+                [CreateSearchCriterion(1, "Software Engineer")];
         }
 
         public List<JobRetrievalWorkflowExecution> Executions { get; } = [];
@@ -183,6 +216,12 @@ public sealed class JobRetrievalWorkflowManagerTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_providers);
+        }
+
+        public Task<IReadOnlyList<JobSearchCriterion>> GetSearchCriteriaAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_searchCriteria);
         }
 
         public Task AddProviderResponseAsync(
@@ -219,12 +258,16 @@ public sealed class JobRetrievalWorkflowManagerTests
 
         public List<JobBoardProvider> RequestedProviders { get; } = [];
 
+        public List<JobSearchCriterion> RequestedSearchCriteria { get; } = [];
+
         public Task<JobBoardProviderResponse> RetrieveAsync(
             Guid workflowExecutionId,
             JobBoardProvider provider,
+            JobSearchCriterion searchCriterion,
             CancellationToken cancellationToken = default)
         {
             RequestedProviders.Add(provider);
+            RequestedSearchCriteria.Add(searchCriterion);
             var successful = provider.JobBoardProviderId != _failingProviderId;
             return Task.FromResult(new JobBoardProviderResponse
             {

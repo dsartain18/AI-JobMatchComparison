@@ -7,5 +7,6 @@ public interface IJobBoardProviderClient
     Task<JobBoardProviderResponse> RetrieveAsync(
         Guid workflowExecutionId,
         JobBoardProvider provider,
+        JobSearchCriterion searchCriterion,
         CancellationToken cancellationToken = default);
 }

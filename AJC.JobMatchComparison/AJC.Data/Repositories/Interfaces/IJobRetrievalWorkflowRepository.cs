@@ -11,6 +11,9 @@ public interface IJobRetrievalWorkflowRepository
     Task<IReadOnlyList<JobBoardProvider>> GetEnabledProvidersAsync(
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<JobSearchCriterion>> GetSearchCriteriaAsync(
+        CancellationToken cancellationToken = default);
+
     Task AddProviderResponseAsync(
         JobBoardProviderResponse response,
         CancellationToken cancellationToken = default);
