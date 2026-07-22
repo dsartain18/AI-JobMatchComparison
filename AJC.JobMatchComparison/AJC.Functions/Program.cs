@@ -1,5 +1,7 @@
 using AJC.Functions.Managers;
 using AJC.Functions.Managers.Interfaces;
+using AJC.Functions.Repositories;
+using AJC.Functions.Repositories.Interfaces;
 using AJC.Functions.Services;
 using AJC.Functions.Services.Interfaces;
 using Azure.Identity;
@@ -17,8 +19,10 @@ var host = new HostBuilder()
     .ConfigureServices((context, services) =>
     {
         services.AddSingleton(_ => CreateBlobServiceClient(context.Configuration));
-        services.AddSingleton<IJobExecutionLockService, BlobJobExecutionLockService>();
-        services.AddSingleton<IJobRetrievalWorkflowManager, JobRetrievalWorkflowManager>();
+        services.AddScoped<IJobExecutionLockService, BlobJobExecutionLockService>();
+        services.AddScoped<IJobRetrievalWorkflowManager, JobRetrievalWorkflowManager>();
+        services.AddScoped<IJobRetrievalWorkflowRepository, JobRetrievalWorkflowRepository>();
+
     })
     .Build();
 
