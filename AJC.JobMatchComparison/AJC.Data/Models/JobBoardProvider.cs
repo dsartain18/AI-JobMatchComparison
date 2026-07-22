@@ -7,6 +7,8 @@ public partial class JobBoardProvider
 {
     public int JobBoardProviderId { get; set; }
 
+    public string? JobBoardApplicationId { get; set; }
+
     public string JobBoardName { get; set; } = null!;
 
     public string FeedUrl { get; set; } = null!;

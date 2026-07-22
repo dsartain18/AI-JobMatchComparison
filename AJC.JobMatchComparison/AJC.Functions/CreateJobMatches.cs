@@ -22,7 +22,7 @@ public class CreateJobMatches
 
     [Function("CreateJobMatches")]
     public async Task<HttpResponseData> RunManualAsync(
-        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData request,
         CancellationToken cancellationToken)
     {
         var executionId =
