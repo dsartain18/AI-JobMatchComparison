@@ -63,5 +63,6 @@ per enabled provider and criterion. The URL manager appends the configured
 search page and adds `app_id`, `app_key`, `results_per_page`, and `what`; the
 `what` value comes from `JobSearchCriteriaDescription`. Azure deployments
 configure the other non-secret values through `adzunaSearchPage` and
-`adzunaResultsPerPage`. Never log or persist the constructed URL because it
-contains the Adzuna API key.
+`adzunaResultsPerPage`. The complete constructed URL is persisted in
+`JobBoardProviderResponse.RequestUrl`, including the Adzuna API key, so access
+to that table and its backups must be restricted accordingly.
