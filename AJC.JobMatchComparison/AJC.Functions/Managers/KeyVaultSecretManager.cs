@@ -1,5 +1,5 @@
 using AJC.Functions.Managers.Interfaces;
-using Azure.Identity;
+using Azure.Core;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 
@@ -9,12 +9,15 @@ public sealed class KeyVaultSecretManager : IKeyVaultSecretManager
 {
     private readonly Lazy<SecretClient> _secretClient;
 
-    public KeyVaultSecretManager(IConfiguration configuration)
+    public KeyVaultSecretManager(
+        IConfiguration configuration,
+        TokenCredential credential)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(credential);
 
         _secretClient = new Lazy<SecretClient>(
-            () => CreateSecretClient(configuration),
+            () => CreateSecretClient(configuration, credential),
             LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
@@ -41,7 +44,9 @@ public sealed class KeyVaultSecretManager : IKeyVaultSecretManager
         return value;
     }
 
-    private static SecretClient CreateSecretClient(IConfiguration configuration)
+    private static SecretClient CreateSecretClient(
+        IConfiguration configuration,
+        TokenCredential credential)
     {
         var vaultUri = configuration["KeyVault:vaultUri"];
 
@@ -51,6 +56,6 @@ public sealed class KeyVaultSecretManager : IKeyVaultSecretManager
                 "KeyVault__vaultUri must be configured to retrieve provider credentials.");
         }
 
-        return new SecretClient(new Uri(vaultUri), new DefaultAzureCredential());
+        return new SecretClient(new Uri(vaultUri), credential);
     }
 }
