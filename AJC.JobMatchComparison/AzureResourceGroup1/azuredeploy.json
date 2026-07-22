@@ -78,6 +78,23 @@
         "description": "Disables automatic job retrieval while retaining manual execution through the Functions administrator endpoint."
       }
     },
+    "adzunaSearchPage": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Adzuna search result page requested by the retrieval workflow."
+      }
+    },
+    "adzunaResultsPerPage": {
+      "type": "int",
+      "defaultValue": 25,
+      "minValue": 1,
+      "maxValue": 50,
+      "metadata": {
+        "description": "Number of Adzuna jobs requested per page."
+      }
+    },
     "roleAssignmentGeneration": {
       "type": "string",
       "defaultValue": "windows-v1",
@@ -124,6 +141,7 @@
     "keyVaultName": "[concat('ajc-keyvault3', '-', parameters('environmentName'))]",
     "operationsKeyVaultName": "[concat('ajc-ops-keyvault3', '-', parameters('environmentName'))]",
     "sqlAdministratorPasswordSecretName": "Sql-Administrator-Password",
+    "sqlConnectionStringSecretName": "Sql-ConnectionString",
     "functionPlanName": "[format('{0}-flex-plan', variables('suffix'))]",
     "functionAppName": "[concat('ajc-functionapp', '-', parameters('environmentName'))]",
     "deploymentContainerName": "function-releases",
@@ -479,6 +497,22 @@
       }
     },
     {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', variables('operationsKeyVaultName'), variables('sqlConnectionStringSecretName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName'))]",
+        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('sqlDatabaseName'))]"
+      ],
+      "properties": {
+        "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Persist Security Info=False;User ID={2};Password={3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2023-08-01-preview').fullyQualifiedDomainName, variables('sqlDatabaseName'), parameters('sqlAdministratorLogin'), parameters('sqlAdministratorPassword'))]",
+        "contentType": "Azure SQL connection string",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2024-04-01",
       "name": "[variables('functionPlanName')]",
@@ -509,7 +543,8 @@
         "[resourceId('Microsoft.ServiceBus/namespaces/queues', variables('serviceBusNamespaceName'), variables('serviceBusQueueName'))]",
         "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('sqlDatabaseName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
-        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'OpenAI-ApiKey')]"
+        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'OpenAI-ApiKey')]",
+        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('operationsKeyVaultName'), variables('sqlConnectionStringSecretName'))]"
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('functionPlanName'))]",
@@ -525,7 +560,8 @@
       "location": "[parameters('location')]",
       "tags": "[variables('tags')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults/providers/roleAssignments', variables('operationsKeyVaultName'), 'Microsoft.Authorization', guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]"
       ],
       "properties": {
         "alwaysOn": false,
@@ -545,6 +581,14 @@
           {
             "name": "JobSearchSchedule",
             "value": "[parameters('jobSearchSchedule')]"
+          },
+          {
+            "name": "Adzuna__SearchPage",
+            "value": "[string(parameters('adzunaSearchPage'))]"
+          },
+          {
+            "name": "Adzuna__ResultsPerPage",
+            "value": "[string(parameters('adzunaResultsPerPage'))]"
           },
           {
             "name": "AzureWebJobs.CreateJobMatchesTimer.Disabled",
@@ -579,8 +623,12 @@
             "value": "[variables('serviceBusQueueName')]"
           },
           {
-            "name": "Sql__connectionString",
-            "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Managed Identity;', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2023-08-01-preview').fullyQualifiedDomainName, variables('sqlDatabaseName'))]"
+            "name": "OperationsKeyVault__vaultUri",
+            "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), '2023-07-01').vaultUri]"
+          },
+          {
+            "name": "Sql__connectionStringSecretName",
+            "value": "[variables('sqlConnectionStringSecretName')]"
           },
           {
             "name": "KeyVault__vaultUri",
@@ -714,6 +762,20 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ],
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('operationsKeyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName'))]"
       ],
       "properties": {
         "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
