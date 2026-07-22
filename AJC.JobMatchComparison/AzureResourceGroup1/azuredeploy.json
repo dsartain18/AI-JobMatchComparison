@@ -108,12 +108,6 @@
         "description": "Enterprise application object ID used for Azure RBAC role assignments."
       }
     },
-    "appRegistrationClientSecret": {
-      "type": "secureString",
-      "metadata": {
-        "description": "Client secret for the shared app registration. Supply during deployment; do not store it in a checked-in parameter file."
-      }
-    },
     "keyVaultAdministratorObjectId": {
       "type": "string",
       "metadata": {
@@ -617,10 +611,6 @@
           {
             "name": "AzureWebJobsStorage__credential",
             "value": "managedidentity"
-          },
-          {
-            "name": "AZURE_CLIENT_SECRET",
-            "value": "[parameters('appRegistrationClientSecret')]"
           },
           {
             "name": "JobMatchStorage__serviceUri",
