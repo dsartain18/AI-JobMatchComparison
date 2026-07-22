@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using AJC.Data.Models;
 using AJC.Functions.Managers.Interfaces;
@@ -73,14 +75,18 @@ public sealed class JobBoardProviderClient : IJobBoardProviderClient
                 provider,
                 searchCriterion,
                 cancellationToken);
+            result.RequestUrl = requestUrl;
             using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+            AddProviderRequestHeaders(request, provider);
 
             using var response = await _httpClient.SendAsync(
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
 
-            result.RawResponseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            result.RawResponseBody = await ReadResponseBodyAsync(
+                response.Content,
+                cancellationToken);
             result.HttpStatusCode = (short)response.StatusCode;
             result.ResponseContentType = response.Content.Headers.ContentType?.ToString();
             result.ResponseHeaders = SerializeHeaders(response);
@@ -134,6 +140,42 @@ public sealed class JobBoardProviderClient : IJobBoardProviderClient
         }
 
         return result;
+    }
+
+    private static async Task<string> ReadResponseBodyAsync(
+        HttpContent content,
+        CancellationToken cancellationToken)
+    {
+        var contentType = content.Headers.ContentType;
+
+        try
+        {
+            return await content.ReadAsStringAsync(cancellationToken);
+        }
+        catch (InvalidOperationException) when (
+            string.Equals(
+                contentType?.MediaType,
+                "application/json",
+                StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(contentType?.CharSet))
+        {
+            var responseBytes = await content.ReadAsByteArrayAsync(cancellationToken);
+            return Encoding.UTF8.GetString(responseBytes);
+        }
+    }
+
+    private static void AddProviderRequestHeaders(
+        HttpRequestMessage request,
+        JobBoardProvider provider)
+    {
+        if (string.Equals(provider.JobBoardName, "Adzuna", StringComparison.OrdinalIgnoreCase))
+        {
+            request.Headers.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("*/*"));
+            request.Content = new ByteArrayContent([]);
+            request.Content.Headers.ContentType =
+                new MediaTypeHeaderValue("application/json");
+        }
     }
 
     private static string SerializeHeaders(HttpResponseMessage response)
