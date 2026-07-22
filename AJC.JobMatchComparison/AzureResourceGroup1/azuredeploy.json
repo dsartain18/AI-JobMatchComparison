@@ -102,12 +102,6 @@
         "description": "Stable seed used in role-assignment names. Change this value only when an assigned principal is recreated."
       }
     },
-    "appRegistrationClientId": {
-      "type": "string",
-      "metadata": {
-        "description": "Application (client) ID used by the Function App and local development."
-      }
-    },
     "appRegistrationObjectId": {
       "type": "string",
       "metadata": {
@@ -623,14 +617,6 @@
           {
             "name": "AzureWebJobsStorage__credential",
             "value": "managedidentity"
-          },
-          {
-            "name": "AZURE_TENANT_ID",
-            "value": "[subscription().tenantId]"
-          },
-          {
-            "name": "AZURE_CLIENT_ID",
-            "value": "[parameters('appRegistrationClientId')]"
           },
           {
             "name": "AZURE_CLIENT_SECRET",

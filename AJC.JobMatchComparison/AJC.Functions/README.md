@@ -35,9 +35,10 @@ header. The local Functions host does not enforce authorization by default.
   development.
   The standard `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET`
   environment-variable names are also supported and take precedence.
-  The deployment supplies the same values from `appRegistrationClientId`,
-  `appRegistrationObjectId`, and the secure `appRegistrationClientSecret`
-  parameters.
+  Azure deployment uses the tenant and client ID from the published
+  `appsettings.json`, supplies the secret through the secure
+  `appRegistrationClientSecret` parameter, and uses
+  `appRegistrationObjectId` only for RBAC assignments.
 - The Functions host continues to use the Function App's system-assigned
   identity for `AzureWebJobsStorage`; this platform connection is established
   before application dependency injection runs. Application Blob Storage,
