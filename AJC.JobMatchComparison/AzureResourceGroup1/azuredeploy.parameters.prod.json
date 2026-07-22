@@ -17,9 +17,6 @@
     "sqlEntraAdminLogin": {
       "value": "JobMatch SQL Administrators"
     },
-    "sqlAdministratorPassword": {
-      "value": "[concat('Z', 'A', 'D', uniqueString(resourceGroup().id, subscription().id), 'f', 't', 'x', '!')]"
-    },
     "sqlAllowedIpAddress": {
       "value": ""
     },
@@ -28,6 +25,15 @@
     },
     "functionInstanceMemoryMB": {
       "value": 2048
+    },
+    "jobSearchSchedule": {
+      "value": "0 0 6 * * *"
+    },
+    "jobSearchScheduleDisabled": {
+      "value": false
+    },
+    "keyVaultAdministratorObjectId": {
+      "value": "0b81b530-6403-40e0-9ad0-539f795c4040"
     },
     "openAiModel": {
       "value": "gpt-5.6-luna"

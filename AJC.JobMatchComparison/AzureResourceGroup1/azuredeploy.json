@@ -64,11 +64,31 @@
         4096
       ]
     },
+    "jobSearchSchedule": {
+      "type": "string",
+      "defaultValue": "0 0 6 * * *",
+      "metadata": {
+        "description": "Six-field NCRONTAB schedule for the job retrieval workflow."
+      }
+    },
+    "jobSearchScheduleDisabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Disables automatic job retrieval while retaining manual execution through the Functions administrator endpoint."
+      }
+    },
     "roleAssignmentGeneration": {
       "type": "string",
       "defaultValue": "windows-v1",
       "metadata": {
         "description": "Stable seed used in role-assignment names. Change this value only when the Function App system-assigned identity is recreated."
+      }
+    },
+    "keyVaultAdministratorObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Microsoft Entra object ID of the user who receives Key Vault Administrator data-plane access."
       }
     },
     "openAiApiKey": {
@@ -87,7 +107,7 @@
   },
   "variables": {
     "suffix": "[toLower(format('{0}-{1}', parameters('namePrefix'), parameters('environmentName')))]",
-    "compactSuffix": "[take(toLower(replace(format('{0}{1}{2}', parameters('namePrefix'), parameters('environmentName'), uniqueString(resourceGroup().id)), '-', '')), 20)]",
+    "compactSuffix": "[take(toLower(replace(format('{0}{1}', parameters('namePrefix'), parameters('environmentName')), '-', '')), 20)]",
     "tags": {
       "application": "JobMatchComparison",
       "environment": "[parameters('environmentName')]",
@@ -99,18 +119,22 @@
     "applicationStorageName": "[take(format('{0}data', variables('compactSuffix')), 24)]",
     "serviceBusNamespaceName": "[format('{0}', variables('suffix'))]",
     "serviceBusQueueName": "job-analysis",
-    "sqlServerName": "[take(format('{0}-sql', variables('compactSuffix')), 63)]",
+    "sqlServerName": "[take(format('{0}-{1}-sql', 'ajc', variables('compactSuffix')), 63)]",
     "sqlDatabaseName": "JobMatchComparison",
     "keyVaultName": "[concat('ajc-keyvault3', '-', parameters('environmentName'))]",
+    "operationsKeyVaultName": "[concat('ajc-ops-keyvault3', '-', parameters('environmentName'))]",
+    "sqlAdministratorPasswordSecretName": "Sql-Administrator-Password",
     "functionPlanName": "[format('{0}-flex-plan', variables('suffix'))]",
     "functionAppName": "[concat('ajc-functionapp', '-', parameters('environmentName'))]",
     "deploymentContainerName": "function-releases",
+    "jobSearchLockContainerName": "job-search-scheduler-locks",
     "storageBlobDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
     "storageQueueDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
     "storageTableDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')]",
     "serviceBusDataReceiverRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0')]",
     "serviceBusDataSenderRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')]",
-    "keyVaultSecretsUserRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]"
+    "keyVaultSecretsUserRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
+    "keyVaultAdministratorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')]"
   },
   "resources": [
     {
@@ -183,6 +207,17 @@
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2023-05-01",
       "name": "[format('{0}/default/{1}', variables('runtimeStorageName'), variables('deploymentContainerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('runtimeStorageName'), 'default')]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/default/{1}', variables('runtimeStorageName'), variables('jobSearchLockContainerName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('runtimeStorageName'), 'default')]"
       ],
@@ -304,7 +339,9 @@
         "publicNetworkAccess": "Enabled",
         "restrictOutboundNetworkAccess": "Disabled"
       },
-      "dependsOn": []
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('operationsKeyVaultName'), variables('sqlAdministratorPasswordSecretName'))]"
+      ]
     },
     {
       "type": "Microsoft.Sql/servers/databases",
@@ -405,6 +442,43 @@
       }
     },
     {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('operationsKeyVaultName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "enableRbacAuthorization": true,
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "enablePurgeProtection": true,
+        "softDeleteRetentionInDays": 90,
+        "publicNetworkAccess": "Enabled"
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', variables('operationsKeyVaultName'), variables('sqlAdministratorPasswordSecretName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('sqlAdministratorPassword')]",
+        "contentType": "Azure SQL administrator password",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2024-04-01",
       "name": "[variables('functionPlanName')]",
@@ -467,6 +541,14 @@
           {
             "name": "FUNCTIONS_WORKER_RUNTIME",
             "value": "dotnet-isolated"
+          },
+          {
+            "name": "JobSearchSchedule",
+            "value": "[parameters('jobSearchSchedule')]"
+          },
+          {
+            "name": "AzureWebJobs.CreateJobMatchesTimer.Disabled",
+            "value": "[string(parameters('jobSearchScheduleDisabled'))]"
           },
           {
             "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
@@ -638,6 +720,32 @@
         "principalType": "ServicePrincipal",
         "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]"
       }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), parameters('keyVaultAdministratorObjectId'), variables('keyVaultAdministratorRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ],
+      "properties": {
+        "principalId": "[parameters('keyVaultAdministratorObjectId')]",
+        "principalType": "User",
+        "roleDefinitionId": "[variables('keyVaultAdministratorRoleId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('operationsKeyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), parameters('keyVaultAdministratorObjectId'), variables('keyVaultAdministratorRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName'))]"
+      ],
+      "properties": {
+        "principalId": "[parameters('keyVaultAdministratorObjectId')]",
+        "principalType": "User",
+        "roleDefinitionId": "[variables('keyVaultAdministratorRoleId')]"
+      }
     }
   ],
   "outputs": {
@@ -668,6 +776,10 @@
     "keyVaultName": {
       "type": "string",
       "value": "[variables('keyVaultName')]"
+    },
+    "operationsKeyVaultName": {
+      "type": "string",
+      "value": "[variables('operationsKeyVaultName')]"
     },
     "applicationStorageAccountName": {
       "type": "string",
