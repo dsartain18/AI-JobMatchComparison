@@ -99,7 +99,25 @@
       "type": "string",
       "defaultValue": "windows-v1",
       "metadata": {
-        "description": "Stable seed used in role-assignment names. Change this value only when the Function App system-assigned identity is recreated."
+        "description": "Stable seed used in role-assignment names. Change this value only when an assigned principal is recreated."
+      }
+    },
+    "appRegistrationClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Application (client) ID used by the Function App and local development."
+      }
+    },
+    "appRegistrationObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Enterprise application object ID used for Azure RBAC role assignments."
+      }
+    },
+    "appRegistrationClientSecret": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Client secret for the shared app registration. Supply during deployment; do not store it in a checked-in parameter file."
       }
     },
     "keyVaultAdministratorObjectId": {
@@ -561,7 +579,7 @@
       "tags": "[variables('tags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-        "[resourceId('Microsoft.KeyVault/vaults/providers/roleAssignments', variables('operationsKeyVaultName'), 'Microsoft.Authorization', guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]"
+        "[resourceId('Microsoft.KeyVault/vaults/providers/roleAssignments', variables('operationsKeyVaultName'), 'Microsoft.Authorization', guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), parameters('appRegistrationObjectId'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]"
       ],
       "properties": {
         "alwaysOn": false,
@@ -607,6 +625,18 @@
             "value": "managedidentity"
           },
           {
+            "name": "AZURE_TENANT_ID",
+            "value": "[subscription().tenantId]"
+          },
+          {
+            "name": "AZURE_CLIENT_ID",
+            "value": "[parameters('appRegistrationClientId')]"
+          },
+          {
+            "name": "AZURE_CLIENT_SECRET",
+            "value": "[parameters('appRegistrationClientSecret')]"
+          },
+          {
             "name": "JobMatchStorage__serviceUri",
             "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), '2023-05-01').primaryEndpoints.blob]"
           },
@@ -636,7 +666,7 @@
           },
           {
             "name": "OpenAI__ApiKey",
-            "value": "[format('@Microsoft.KeyVault(SecretUri=https://{0}.vault.azure.net/secrets/OpenAI-ApiKey/)', variables('keyVaultName'))]"
+            "value": "[parameters('openAiApiKey')]"
           },
           {
             "name": "OpenAI__Model",
@@ -716,13 +746,13 @@
     {
       "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('applicationStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('storageBlobDataContributorRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('applicationStorageName'), guid(resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName')), parameters('appRegistrationObjectId'), parameters('roleAssignmentGeneration'), variables('storageBlobDataContributorRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('applicationStorageName'))]"
       ],
       "properties": {
-        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalId": "[parameters('appRegistrationObjectId')]",
         "principalType": "ServicePrincipal",
         "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]"
       }
@@ -730,13 +760,13 @@
     {
       "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('serviceBusDataReceiverRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), parameters('appRegistrationObjectId'), parameters('roleAssignmentGeneration'), variables('serviceBusDataReceiverRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"
       ],
       "properties": {
-        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalId": "[parameters('appRegistrationObjectId')]",
         "principalType": "ServicePrincipal",
         "roleDefinitionId": "[variables('serviceBusDataReceiverRoleId')]"
       }
@@ -744,13 +774,13 @@
     {
       "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('serviceBusDataSenderRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('serviceBusNamespaceName'), guid(resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName')), parameters('appRegistrationObjectId'), parameters('roleAssignmentGeneration'), variables('serviceBusDataSenderRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"
       ],
       "properties": {
-        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalId": "[parameters('appRegistrationObjectId')]",
         "principalType": "ServicePrincipal",
         "roleDefinitionId": "[variables('serviceBusDataSenderRoleId')]"
       }
@@ -758,13 +788,13 @@
     {
       "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('keyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), parameters('appRegistrationObjectId'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
       "properties": {
-        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalId": "[parameters('appRegistrationObjectId')]",
         "principalType": "ServicePrincipal",
         "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]"
       }
@@ -772,13 +802,13 @@
     {
       "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('operationsKeyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), variables('functionAppName'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', variables('operationsKeyVaultName'), guid(resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName')), parameters('appRegistrationObjectId'), parameters('roleAssignmentGeneration'), variables('keyVaultSecretsUserRoleId')))]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', variables('operationsKeyVaultName'))]"
       ],
       "properties": {
-        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-04-01', 'Full').identity.principalId]",
+        "principalId": "[parameters('appRegistrationObjectId')]",
         "principalType": "ServicePrincipal",
         "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]"
       }

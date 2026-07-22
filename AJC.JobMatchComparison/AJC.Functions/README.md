@@ -25,12 +25,23 @@ header. The local Functions host does not enforce authorization by default.
   this repository has been shared. The application no longer reads a database
   password from that tracked file.
 - Azure deployments create the `Sql-ConnectionString` secret in the operations
-  Key Vault and grant the Function App's managed identity Key Vault Secrets
-  User access. The application retrieves that secret when wiring up EF Core.
-- TODO(SCRUM-5/manual): For local execution, either sign in with an identity
-  that can read the deployed operations Key Vault or add
-  `ConnectionStrings:JobMatchComparisonContext` to the untracked
-  `local.settings.json` file.
+  Key Vault and grant the configured app registration Key Vault Secrets User
+  access. The application retrieves that secret when wiring up EF Core.
+- Application-owned Azure SDK clients authenticate as the same app registration
+  locally and in Azure. The tracked `appsettings.json` contains the non-secret
+  `AzureAd:TenantId` and `AzureAd:ClientId` values. Configure
+  `AzureAd:ClientSecret` in the top-level `AzureAd` section of the untracked
+  `local.settings.json`; the application explicitly loads that file for local
+  development.
+  The standard `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET`
+  environment-variable names are also supported and take precedence.
+  The deployment supplies the same values from `appRegistrationClientId`,
+  `appRegistrationObjectId`, and the secure `appRegistrationClientSecret`
+  parameters.
+- The Functions host continues to use the Function App's system-assigned
+  identity for `AzureWebJobsStorage`; this platform connection is established
+  before application dependency injection runs. Application Blob Storage,
+  Service Bus, and both Key Vault role assignments use the app registration.
 - TODO(SCRUM-5/manual): Add the required rows to `JobBoardProvider`, using a
   secret-store reference in `CredentialReference` rather than a plaintext API
   key. Disabled rows are ignored by the workflow.
