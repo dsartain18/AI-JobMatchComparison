@@ -26,6 +26,12 @@
     "functionInstanceMemoryMB": {
       "value": 2048
     },
+    "jobSearchSchedule": {
+      "value": "0 0 6 * * *"
+    },
+    "jobSearchScheduleDisabled": {
+      "value": false
+    },
     "keyVaultAdministratorObjectId": {
       "value": "0b81b530-6403-40e0-9ad0-539f795c4040"
     },
