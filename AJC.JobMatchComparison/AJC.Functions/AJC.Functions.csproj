@@ -18,6 +18,11 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.*" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.*" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.18" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.18">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +38,10 @@
 
   <ItemGroup>
     <Folder Include="Entities\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AJC.Data\AJC.Data.csproj" />
   </ItemGroup>
 
 </Project>
